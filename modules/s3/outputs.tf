@@ -1,0 +1,14 @@
+output "s3_bucket_id" {
+  description = "Name (id) of the bucket"
+  value       = module.s3_bucket.s3_bucket_id
+}
+
+output "s3_bucket_arn" {
+  description = "ARN of the bucket"
+  value       = module.s3_bucket.s3_bucket_arn
+}
+
+output "s3_bucket_region" {
+  description = "Region of the bucket"
+  value       = module.s3_bucket.s3_bucket_region
+}
