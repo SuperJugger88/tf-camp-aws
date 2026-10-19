@@ -5,9 +5,21 @@ variable "name" {
 }
 
 variable "ami" {
-  description = "AMI ID for the instance"
+  description = "AMI ID override (null = latest Ubuntu from data.aws_ami)"
   type        = string
   default     = null
+}
+
+variable "ami_name_filter" {
+  description = "AMI name filter when ami is not set"
+  type        = string
+  default     = "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"
+}
+
+variable "ami_owner" {
+  description = "AMI owner account (Canonical)"
+  type        = string
+  default     = "099720109477"
 }
 
 variable "instance_type" {

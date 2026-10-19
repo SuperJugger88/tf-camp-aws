@@ -4,7 +4,7 @@ module "ec2_instance" {
 
   name = var.name
 
-  ami                         = var.ami
+  ami                         = coalesce(var.ami, data.aws_ami.ubuntu.id)
   instance_type               = var.instance_type
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = var.vpc_security_group_ids

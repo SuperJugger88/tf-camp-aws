@@ -61,6 +61,28 @@ variable "versioning" {
   }
 }
 
+variable "attach_policy" {
+  description = "Attach a bucket policy"
+  type        = bool
+  default     = false
+}
+
+variable "policy_principal_arns" {
+  description = "IAM principal ARNs allowed by the bucket policy"
+  type        = list(string)
+  default     = []
+}
+
+variable "policy_actions" {
+  description = "S3 actions allowed for policy principals"
+  type        = list(string)
+  default = [
+    "s3:GetObject",
+    "s3:PutObject",
+    "s3:ListBucket",
+  ]
+}
+
 variable "tags" {
   description = "Tags to apply to the bucket"
   type        = map(string)

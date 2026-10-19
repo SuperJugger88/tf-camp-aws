@@ -6,6 +6,7 @@ module "rds" {
 
   engine                = var.engine
   engine_version        = var.engine_version
+  family                = var.family
   instance_class        = var.instance_class
   allocated_storage     = var.allocated_storage
   max_allocated_storage = var.max_allocated_storage
@@ -14,7 +15,6 @@ module "rds" {
 
   db_name  = var.db_name
   username = var.db_username
-  password = var.db_password
   port     = var.port
 
   manage_master_user_password = var.manage_master_user_password

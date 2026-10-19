@@ -14,8 +14,10 @@ module "s3_bucket" {
   restrict_public_buckets = var.restrict_public_buckets
 
   server_side_encryption_configuration = var.server_side_encryption_configuration
+  versioning                           = var.versioning
 
-  versioning = var.versioning
+  attach_policy = var.attach_policy
+  policy        = var.attach_policy ? data.aws_iam_policy_document.this[0].json : null
 
   tags = var.tags
 }

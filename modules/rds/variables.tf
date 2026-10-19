@@ -11,9 +11,15 @@ variable "engine" {
 }
 
 variable "engine_version" {
-  description = "Database engine version"
+  description = "Database engine version (must exist in selected Region)"
   type        = string
-  default     = "15.4"
+  default     = "15.19"
+}
+
+variable "family" {
+  description = "DB parameter group family (must match major engine version)"
+  type        = string
+  default     = "postgres15"
 }
 
 variable "instance_class" {
@@ -62,16 +68,10 @@ variable "db_username" {
   }
 }
 
-variable "db_password" {
-  description = "Master password"
-  type        = string
-  sensitive   = true
-}
-
 variable "manage_master_user_password" {
   description = "Let RDS manage password in Secrets Manager"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "port" {
@@ -121,9 +121,9 @@ variable "skip_final_snapshot" {
 }
 
 variable "backup_retention_period" {
-  description = "Backup retention days"
+  description = "Backup retention days (Free Tier max is 1)"
   type        = number
-  default     = 7
+  default     = 1
 }
 
 variable "backup_window" {
