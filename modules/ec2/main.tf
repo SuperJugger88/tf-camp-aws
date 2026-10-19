@@ -11,6 +11,7 @@ module "ec2_instance" {
   key_name                    = var.key_name
   monitoring                  = var.monitoring
   associate_public_ip_address = var.associate_public_ip_address
+  source_dest_check           = var.source_dest_check
 
   user_data                   = var.user_data
   user_data_base64            = var.user_data_base64

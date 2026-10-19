@@ -58,6 +58,12 @@ variable "associate_public_ip_address" {
   default     = false
 }
 
+variable "source_dest_check" {
+  description = "Source/dest check (false for NetBird routing peer / NAT)"
+  type        = bool
+  default     = true
+}
+
 variable "user_data" {
   description = "User data script to provide when launching"
   type        = string

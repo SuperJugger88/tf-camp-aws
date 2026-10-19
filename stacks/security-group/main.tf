@@ -10,15 +10,15 @@ module "security_group" {
       from_port   = 5432
       to_port     = 5432
       protocol    = "tcp"
-      cidr_blocks = join(",", data.terraform_remote_state.vpc.outputs.private_subnets_cidr_blocks)
-      description = "PostgreSQL from private app subnets"
+      cidr_blocks = data.terraform_remote_state.vpc.outputs.vpc_cidr_block
+      description = "PostgreSQL from VPC (incl. NetBird routing peer)"
     },
     {
       from_port   = 22
       to_port     = 22
       protocol    = "tcp"
       cidr_blocks = data.terraform_remote_state.vpc.outputs.vpc_cidr_block
-      description = "SSH from within VPC only"
+      description = "SSH from within VPC (incl. NetBird routing peer)"
     }
   ]
 
