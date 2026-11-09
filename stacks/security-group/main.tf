@@ -1,5 +1,6 @@
-module "security_group" {
-  source = "../../modules/security-group"
+module "app" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 5.0"
 
   name        = local.name_sg_app
   description = "App SG for ${var.project_name}: SSH + Postgres from private subnets"

@@ -8,3 +8,11 @@ provider "registry.terraform.io/hashicorp/aws" {
     "h1:rB2Amjxr32AZWeWsDMQyU61xmW8IvSAUXhv4ogvx9l4=",
   ]
 }
+
+provider "registry.terraform.io/hashicorp/tls" {
+  version     = "4.4.2"
+  constraints = ">= 3.4.0"
+  hashes = [
+    "h1:/RQKd6LussdsR99zSuIYdV4e3JrV4l0stQ5Vb1qnbWo=",
+  ]
+}

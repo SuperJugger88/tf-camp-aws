@@ -1,15 +1,15 @@
 output "rds_endpoint" {
-  value = module.rds.rds_endpoint
+  value = module.postgres.db_instance_endpoint
 }
 
 output "rds_arn" {
-  value = module.rds.rds_arn
+  value = module.postgres.db_instance_arn
 }
 
 output "rds_master_user_secret_arn" {
-  value = module.rds.rds_master_user_secret_arn
+  value = module.postgres.db_instance_master_user_secret_arn
 }
 
 output "rds_username" {
-  value = module.rds.rds_username
+  value = var.db_username
 }
