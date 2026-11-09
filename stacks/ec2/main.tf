@@ -3,7 +3,9 @@ module "ec2" {
 
   name                   = local.name_ec2_app
   instance_type          = var.instance_type
-  key_name               = coalesce(var.key_name, data.terraform_remote_state.security_group.outputs.key_name)
+  create_key_pair        = true
+  key_name               = coalesce(var.key_name, "${var.project_name}-default")
+  public_key             = file("${path.module}/../../files/ssh_default.pub")
   subnet_id              = data.terraform_remote_state.vpc.outputs.public_subnets[0]
   vpc_security_group_ids = [data.terraform_remote_state.security_group.outputs.sg_id]
 

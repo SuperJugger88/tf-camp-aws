@@ -14,8 +14,9 @@ variable "instance_type" {
 }
 
 variable "key_name" {
-  type    = string
-  default = null
+  description = "Override key pair name (default: <project>-default via modules/key-pair)"
+  type        = string
+  default     = null
 }
 
 variable "tags" {

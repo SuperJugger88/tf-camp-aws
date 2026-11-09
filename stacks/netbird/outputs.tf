@@ -1,28 +1,28 @@
 output "routing_peer_instance_id" {
-  value = module.routing_peer.instance_id
+  value = module.netbird.routing_peer_instance_id
 }
 
 output "routing_peer_private_ip" {
-  value = module.routing_peer.private_ip
+  value = module.netbird.routing_peer_private_ip
 }
 
 output "routing_peer_public_ip" {
-  value = module.routing_peer.public_ip
+  value = module.netbird.routing_peer_public_ip
 }
 
 output "routing_peer_sg_id" {
-  value = module.security_group.sg_id
+  value = module.netbird.routing_peer_sg_id
 }
 
 output "netbird_clients_group" {
-  description = "Add your laptop peer to this group in NetBird UI"
-  value       = netbird_group.clients.name
+  description = "Laptop peers should be in this group for VPC routes"
+  value       = module.netbird.clients_group_name
 }
 
 output "netbird_network_name" {
-  value = netbird_network.vpc.name
+  value = module.netbird.network_name
 }
 
 output "vpc_cidr" {
-  value = local.vpc_cidr
+  value = data.terraform_remote_state.vpc.outputs.vpc_cidr_block
 }

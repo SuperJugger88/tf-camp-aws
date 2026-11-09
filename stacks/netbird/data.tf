@@ -8,11 +8,11 @@ data "terraform_remote_state" "vpc" {
   }
 }
 
-data "terraform_remote_state" "security_group" {
+data "terraform_remote_state" "ec2" {
   backend = "s3"
   config = {
     bucket  = var.state_bucket
-    key     = var.sg_state_key
+    key     = var.ec2_state_key
     region  = var.aws_region
     profile = var.aws_profile
   }

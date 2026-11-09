@@ -9,14 +9,14 @@ variable "instance_type" {
 }
 
 variable "key_name" {
-  description = "Override EC2 key pair (default: from security-group stack)"
+  description = "Override EC2 key pair (default: from ec2 stack key_pair)"
   type        = string
   default     = null
 }
 
-variable "sg_state_key" {
+variable "ec2_state_key" {
   type    = string
-  default = "learning/security-group/terraform.tfstate"
+  default = "learning/ec2/terraform.tfstate"
 }
 
 variable "netbird_token" {

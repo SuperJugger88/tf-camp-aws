@@ -1,3 +1,12 @@
+resource "aws_key_pair" "this" {
+  count = var.create_key_pair ? 1 : 0
+
+  key_name   = var.key_name
+  public_key = trimspace(var.public_key)
+
+  tags = var.tags
+}
+
 module "ec2_instance" {
   source  = "terraform-aws-modules/ec2-instance/aws"
   version = "~> 6.0"
@@ -8,7 +17,7 @@ module "ec2_instance" {
   instance_type               = var.instance_type
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = var.vpc_security_group_ids
-  key_name                    = var.key_name
+  key_name                    = local.key_name
   monitoring                  = var.monitoring
   associate_public_ip_address = var.associate_public_ip_address
   source_dest_check           = var.source_dest_check

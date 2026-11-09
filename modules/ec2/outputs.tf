@@ -1,3 +1,8 @@
+output "key_name" {
+  description = "Key pair name attached to the instance"
+  value       = local.key_name
+}
+
 output "instance_id" {
   description = "ID of the EC2 instance"
   value       = module.ec2_instance.id

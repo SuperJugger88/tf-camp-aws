@@ -41,7 +41,19 @@ variable "vpc_security_group_ids" {
 }
 
 variable "key_name" {
-  description = "Key pair name for SSH"
+  description = "Key pair name for SSH (existing or to create when create_key_pair = true)"
+  type        = string
+  default     = null
+}
+
+variable "create_key_pair" {
+  description = "Create aws_key_pair from public_key (own the key in this module)"
+  type        = bool
+  default     = false
+}
+
+variable "public_key" {
+  description = "OpenSSH public key material (required if create_key_pair = true)"
   type        = string
   default     = null
 }
