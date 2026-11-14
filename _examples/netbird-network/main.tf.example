@@ -1,0 +1,108 @@
+# Annotated example of stacks/netbird-network/main.tf
+
+# --- Module: network + router + setup key + EC2 resource ---
+module "vpc_access" {
+  source  = "drtinkerer/network/netbird"
+  version = "1.1.0"
+
+  network_name        = "${var.project_name}-aws-vpc" # -> "tf-learn-aws-vpc"
+  network_description = "AWS VPC ${local.vpc_cidr} for ${var.project_name}"
+
+  # Map key becomes the resource NAME in NetBird.
+  # The module always attaches its own group "resources-<network_name>"
+  # to every resource listed here — which is why rds-cidr is NOT here
+  # (it needs its own group for separate policies, see below).
+  network_resources = {
+    ec2-cidr = {
+      description = "EC2 subnets (public + private)"
+      address     = cidrsubnet(local.vpc_cidr, 2, 0) # 10.42.0.0/18
+      enabled     = true
+      # additional_groups = [...]  # optional: attach extra groups
+    }
+  }
+
+  router_config = {
+    metric     = 100    # route priority; lower wins if several routers
+    masquerade = true   # SNAT traffic entering the VPC — required so
+                        # VPC hosts reply to the router, not the client
+    enabled    = true
+  }
+
+  # Module's built-in policy is disabled: we need TWO policies
+  # (clients->ec2, rds-clients->rds), module supports only one.
+  create_default_policy = false
+  # allowed_source_groups / policy_config only matter when the
+  # default policy is enabled.
+
+  create_setup_key = true
+  setup_key_config = {
+    name           = "${var.project_name}-routing-peer"
+    type           = "reusable"   # multiple peers can enroll with it
+    expiry_seconds = 0            # never expires
+    usage_limit    = 5            # max enrollments
+    ephemeral      = false        # peer stays registered when offline
+  }
+}
+
+# --- RDS resource OUTSIDE the module ---
+# Reason: module forces its own group onto every resource, making
+# per-resource policies impossible. Raw resources give full control.
+# (A `moved` block was used during migration; removed after apply.)
+
+resource "netbird_group" "rds_resources" {
+  name = "resources-${var.project_name}-rds" # -> "resources-tf-learn-rds"
+}
+
+resource "netbird_group" "rds_clients" {
+  name = "${var.project_name}-rds-clients" # peers you add in UI/API
+}
+
+resource "netbird_network_resource" "rds_cidr" {
+  network_id  = module.vpc_access.network_id # from module output
+  name        = "rds-cidr"
+  description = "RDS database subnets"
+  address     = cidrsubnet(local.vpc_cidr, 3, 2) # 10.42.64.0/19
+  groups      = [netbird_group.rds_resources.id] # ONLY this group ->
+                                                 # only rds policy applies
+  enabled     = true
+}
+
+# --- Policies: who can reach which resource group ---
+# rule.sources      = client peer groups
+# rule.destinations = resource groups
+# bidirectional=true lets replies flow back through the tunnel.
+
+resource "netbird_policy" "ec2_access" {
+  name        = "${var.project_name}-clients-to-ec2"
+  description = "Allow NetBird clients to reach EC2 subnets via routing peer"
+  enabled     = true
+
+  rule {
+    name          = "clients-to-ec2"
+    action        = "accept"
+    bidirectional = true
+    protocol      = "all" # or "tcp"/"udp" + ports = ["22", "443"]
+    sources       = [data.netbird_group.clients.id] # existing group,
+                                                     # see data.tf
+    destinations  = [module.vpc_access.default_resource_group_id]
+  }
+}
+
+resource "netbird_policy" "rds_access" {
+  name        = "${var.project_name}-rds-clients-to-rds"
+  description = "Allow RDS clients to reach RDS subnets via routing peer"
+  enabled     = true
+
+  rule {
+    name          = "rds-clients-to-rds"
+    action        = "accept"
+    bidirectional = true
+    protocol      = "all"
+    sources       = [netbird_group.rds_clients.id]
+    destinations  = [netbird_group.rds_resources.id]
+  }
+}
+
+# outputs.tf exports: setup_key (sensitive, consumed by stacks/ec2),
+# netbird_clients_group, netbird_rds_clients_group, netbird_routing_group,
+# netbird_network_id/name, vpc_cidr.

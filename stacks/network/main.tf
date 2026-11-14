@@ -14,8 +14,8 @@ module "vpc" {
   private_subnet_names  = local.private_subnet_names
   database_subnet_names = local.database_subnet_names
 
-  enable_nat_gateway     = true
-  single_nat_gateway     = true
+  enable_nat_gateway                 = true
+  single_nat_gateway                 = true
   create_database_subnet_group       = true
   create_database_subnet_route_table = true
   enable_dns_hostnames               = true
