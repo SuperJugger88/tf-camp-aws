@@ -1,0 +1,12 @@
+project_name    = "tf-learn"
+instance_name   = null          # defaults to "<project_name>-ec2-app"
+instance_type   = "t3.micro"    # used for BOTH app and netbird-router
+key_name        = null          # defaults to "<project_name>-default" (from files/ssh_default.pub)
+
+# ami = "ami-0123456789abcdef0"        # explicit AMI; null = latest Ubuntu 24.04
+# ami_name_filter = "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"
+# ami_owner       = "099720109477"     # Canonical
+
+tags = {
+  Environment = "dev"
+}

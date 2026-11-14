@@ -1,0 +1,9 @@
+project_name = "tf-learn"
+vpc_name     = null            # defaults to "<project_name>-vpc"
+vpc_cidr     = "10.42.0.0/16"  # change if it overlaps other networks you route
+azs          = ["ap-southeast-2a", "ap-southeast-2b"]
+
+tags = {
+  Environment = "dev"
+  Owner       = "andrei"
+}

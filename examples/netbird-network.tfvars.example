@@ -1,0 +1,13 @@
+project_name = "tf-learn"
+
+# Required: NetBird Management PAT (Settings -> Access Tokens in NetBird dashboard).
+# Prefer TF_VAR_netbird_token env var over committing it here.
+# netbird_token = "nbp_xxx"
+
+# Existing NetBird group whose peers may reach the EC2 subnets.
+# Create the group in the NetBird UI first, then add your laptop peer to it.
+client_group_name = "tf-learn-clients"
+
+tags = {
+  Environment = "dev"
+}
