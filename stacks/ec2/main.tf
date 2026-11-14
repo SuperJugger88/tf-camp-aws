@@ -38,7 +38,7 @@ module "netbird_router" {
   subnet_id              = data.terraform_remote_state.network.outputs.private_subnets[0]
   vpc_security_group_ids = [data.terraform_remote_state.network.outputs.ec2_sg_id]
   source_dest_check      = false
-  monitoring                  = false
+  monitoring             = false
 
   user_data                   = local.netbird_user_data
   user_data_replace_on_change = true

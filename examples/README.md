@@ -1,8 +1,9 @@
 # Examples
 
-Per-stack `terraform.tfvars` examples and the command reference for the
-`stacks/` roots. Copy an example next to the stack as `terraform.tfvars`
-(git-ignored) or pass values with `-var` / `TF_VAR_*` environment variables.
+Annotated examples for each stack in `stacks/` — commented Terraform code,
+variable references, and `terraform.tfvars` examples. Copy a tfvars example
+next to the real stack as `terraform.tfvars` (git-ignored) or pass values
+with `-var` / `TF_VAR_*` environment variables.
 
 ## Deploy order and commands
 
@@ -133,10 +134,25 @@ with the setup key from `netbird-network` state.
 | `snapshot_identifier` | `null` | Restore from snapshot |
 | `state_bucket`, `network_state_key`, `aws_region`, `aws_profile` | see `variables.tf` | Remote-state plumbing |
 
-## Example tfvars files
+## Stack examples
 
-- [`network.tfvars.example`](network.tfvars.example)
-- [`netbird-network.tfvars.example`](netbird-network.tfvars.example)
-- [`ec2.tfvars.example`](ec2.tfvars.example)
-- [`rds.tfvars.example`](rds.tfvars.example)
-- [`s3.tfvars.example`](s3.tfvars.example)
+Each directory mirrors a real stack and contains:
+
+- `README.md` — what the stack creates and why
+- `main.tf.example` — annotated, commented version of the key Terraform
+  code (modules/resources, important arguments, gotchas)
+- `terraform.tfvars.example` — copy to `terraform.tfvars` next to the
+  real stack to override defaults
+
+| Directory | Stack | Contents |
+|---|---|---|
+| `network/` | `stacks/network` | VPC, subnets, NAT Gateway, 3 security groups |
+| `netbird-network/` | `stacks/netbird-network` | NetBird network, split resources/policies, setup key |
+| `ec2/` | `stacks/ec2` | app instance + NetBird routing peer |
+| `rds/` | `stacks/rds` | RDS PostgreSQL |
+| `s3/` | `stacks/s3` | Terraform state bucket |
+
+## Stack variables
+
+Quick reference; see each `*/terraform.tfvars.example` for the full
+annotated list.
