@@ -22,8 +22,8 @@ module "postgres" {
   manage_master_user_password = var.manage_master_user_password
 
   # Network
-  vpc_security_group_ids = [data.terraform_remote_state.security_group.outputs.sg_id]
-  db_subnet_group_name   = data.terraform_remote_state.vpc.outputs.database_subnet_group
+  vpc_security_group_ids = [data.terraform_remote_state.network.outputs.rds_sg_id]
+  db_subnet_group_name   = data.terraform_remote_state.network.outputs.database_subnet_group
   publicly_accessible    = var.publicly_accessible
   multi_az               = var.multi_az
 

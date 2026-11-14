@@ -14,6 +14,11 @@ output "netbird_routing_group" {
   value       = module.vpc_access.default_resource_group_name
 }
 
+output "netbird_rds_clients_group" {
+  description = "Peers in this group can reach RDS subnets"
+  value       = netbird_group.rds_clients.name
+}
+
 output "netbird_network_name" {
   value = module.vpc_access.network_name
 }

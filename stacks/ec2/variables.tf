@@ -31,14 +31,9 @@ variable "state_bucket" {
   default = "tf-state-andrei-ivanov-2026"
 }
 
-variable "vpc_state_key" {
+variable "network_state_key" {
   type    = string
-  default = "learning/vpc/terraform.tfstate"
-}
-
-variable "sg_state_key" {
-  type    = string
-  default = "learning/security-group/terraform.tfstate"
+  default = "learning/network/terraform.tfstate"
 }
 
 variable "netbird_state_key" {
