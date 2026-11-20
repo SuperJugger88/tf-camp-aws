@@ -3,8 +3,11 @@ project_name = "tf-learn"
 # Globally unique bucket name that stores ALL terraform state files.
 s3_bucket_name = "tf-state-andrei-ivanov-2026"
 
-# IAM principal allowed to read/write state objects.
-s3_policy_principal_arn = "arn:aws:iam::060077938123:user/terraform-admin"
+# Remote state for stacks/iam (Principal ARN for the bucket policy).
+state_bucket  = "tf-state-andrei-ivanov-2026"
+iam_state_key = "learning/iam/terraform.tfstate"
+aws_region    = "ap-southeast-2"
+aws_profile   = "terraform-aws"
 
 tags = {
   Environment = "dev"

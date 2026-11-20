@@ -1,0 +1,8 @@
+project_name = "tf-learn"
+
+# Must match the real state bucket (same name as stacks/s3).
+s3_bucket_name = "tf-state-andrei-ivanov-2026"
+
+tags = {
+  Environment = "dev"
+}

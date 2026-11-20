@@ -52,25 +52,25 @@ module "ec2_sg" {
   tags = merge(local.common_tags, { Name = local.name_sg_ec2 })
 }
 
-module "app_sg" {
+module "mystique_server_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.0"
 
-  name        = local.name_sg_app
-  description = "App SG for ${var.project_name}: SSH + Postgres from private subnets"
+  name        = local.name_sg_mystique_server
+  description = "Mystique VPN server SG for ${var.project_name}: QUIC/UDP 443 from anywhere"
   vpc_id      = module.vpc.vpc_id
 
   ingress_with_cidr_blocks = [
     {
       from_port   = 443
       to_port     = 443
-      protocol    = "tcp"
-      cidr_blocks = module.vpc.vpc_cidr_block
-      description = "HTTPS from within VPC"
+      protocol    = "udp"
+      cidr_blocks = "0.0.0.0/0"
+      description = "QUIC/HTTP3 (mystique-vpn) from anywhere"
     }
   ]
 
-  tags = merge(local.common_tags, { Name = local.name_sg_app })
+  tags = merge(local.common_tags, { Name = local.name_sg_mystique_server })
 }
 
 module "rds_sg" {

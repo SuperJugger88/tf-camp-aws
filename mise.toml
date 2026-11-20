@@ -1,0 +1,17 @@
+#:schema https://mise.jdx.dev/schema/mise.json
+
+min_version = "2024.0.0"
+
+[tools]
+terraform = "1.10.5"
+
+[env]
+AWS_PROFILE = "terraform-aws"
+AWS_REGION = "ap-southeast-2"
+AWS_DEFAULT_REGION = "ap-southeast-2"
+TF_IN_AUTOMATION = "true"
+# Optional local secrets (NETBIRD_TOKEN / TF_VAR_netbird_token) — gitignored
+_.file = [".env"]
+
+[task_config]
+includes = ["mise.tasks.toml"]

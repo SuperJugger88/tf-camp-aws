@@ -8,22 +8,22 @@ module "key_pair" {
   tags = local.common_tags
 }
 
-module "app" {
+module "mystique_server" {
   source  = "terraform-aws-modules/ec2-instance/aws"
   version = "~> 6.0"
 
-  name          = local.name_ec2_app
+  name          = local.name_mystique_server
   instance_type = var.instance_type
   key_name      = module.key_pair.key_pair_name
 
   subnet_id                   = data.terraform_remote_state.network.outputs.public_subnets[0]
-  vpc_security_group_ids      = [data.terraform_remote_state.network.outputs.ec2_sg_id, data.terraform_remote_state.network.outputs.app_sg_id]
+  vpc_security_group_ids      = [data.terraform_remote_state.network.outputs.ec2_sg_id, data.terraform_remote_state.network.outputs.mystique_server_sg_id]
   associate_public_ip_address = true
   monitoring                  = false
 
   ami = coalesce(var.ami, data.aws_ami.ubuntu.id)
 
-  tags = merge(local.common_tags, { Name = local.name_ec2_app })
+  tags = merge(local.common_tags, { Name = local.name_mystique_server })
 }
 
 module "netbird_router" {
