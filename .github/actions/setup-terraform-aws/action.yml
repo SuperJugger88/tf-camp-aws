@@ -1,0 +1,45 @@
+name: Setup Terraform + AWS profile
+description: Install Terraform and write local profile terraform-aws for backends/providers
+
+inputs:
+  terraform-version:
+    description: Terraform version
+    required: false
+    default: "1.10.5"
+  aws-access-key-id:
+    description: AWS access key id
+    required: true
+  aws-secret-access-key:
+    description: AWS secret access key
+    required: true
+  aws-region:
+    description: AWS region
+    required: false
+    default: ap-southeast-2
+
+runs:
+  using: composite
+  steps:
+    - name: Write AWS profile terraform-aws
+      shell: bash
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
+        AWS_REGION: ${{ inputs.aws-region }}
+      run: |
+        mkdir -p ~/.aws
+        printf '%s\n' \
+          '[terraform-aws]' \
+          "aws_access_key_id=${AWS_ACCESS_KEY_ID}" \
+          "aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" \
+          > ~/.aws/credentials
+        printf '%s\n' \
+          '[profile terraform-aws]' \
+          "region=${AWS_REGION}" \
+          > ~/.aws/config
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform-version }}
+        terraform_wrapper: false

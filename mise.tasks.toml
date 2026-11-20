@@ -1,0 +1,255 @@
+#:schema https://mise.jdx.dev/schema/mise-task.json
+
+# ---------------------------------------------------------------------------
+# Generic:  mise run plan -- network
+#           mise run apply -- rds -- -auto-approve
+# ---------------------------------------------------------------------------
+
+[init]
+description = "terraform init -upgrade for a stack"
+alias = "i"
+usage = '''
+arg "<stack>" help="Stack under stacks/" {
+  choices "iam" "s3" "network" "netbird-network" "ec2" "rds"
+}
+'''
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+terraform -chdir="stacks/${usage_stack?}" init -upgrade
+'''
+
+[fmt]
+description = "terraform fmt -check (all stacks)"
+alias = "f"
+run = "terraform fmt -check -recursive stacks"
+
+["fmt:write"]
+description = "terraform fmt -write (all stacks)"
+alias = "fw"
+run = "terraform fmt -recursive stacks"
+
+[validate]
+description = "init -backend=false + validate for a stack"
+alias = "v"
+usage = '''
+arg "<stack>" help="Stack under stacks/" {
+  choices "iam" "s3" "network" "netbird-network" "ec2" "rds"
+}
+'''
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+dir="stacks/${usage_stack?}"
+terraform -chdir="$dir" init -backend=false -upgrade
+terraform -chdir="$dir" validate
+'''
+
+["validate:all"]
+description = "validate every stack"
+alias = "va"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+for s in iam s3 network netbird-network ec2 rds; do
+  echo "===== validate $s ====="
+  mise run validate -- "$s"
+done
+'''
+
+[plan]
+description = "init + plan for a stack"
+alias = "p"
+usage = '''
+arg "<stack>" help="Stack under stacks/" {
+  choices "iam" "s3" "network" "netbird-network" "ec2" "rds"
+}
+arg "[tf_args]" var=#true help="Extra terraform args after --"
+'''
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+dir="stacks/${usage_stack?}"
+terraform -chdir="$dir" init -upgrade
+eval "extra=(${usage_tf_args:-})"
+terraform -chdir="$dir" plan "${extra[@]}"
+'''
+
+["plan:all"]
+description = "plan every stack in dependency order"
+alias = "pa"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+eval "extra=($*)"
+for s in iam s3 network netbird-network ec2 rds; do
+  echo "===== plan $s ====="
+  mise run plan -- "$s" -- "${extra[@]}"
+done
+'''
+
+[apply]
+description = "init + apply for a stack"
+alias = "a"
+usage = '''
+arg "<stack>" help="Stack under stacks/" {
+  choices "iam" "s3" "network" "netbird-network" "ec2" "rds"
+}
+arg "[tf_args]" var=#true help="Extra terraform args after -- (e.g. -auto-approve)"
+'''
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+dir="stacks/${usage_stack?}"
+terraform -chdir="$dir" init -upgrade
+eval "extra=(${usage_tf_args:-})"
+terraform -chdir="$dir" apply "${extra[@]}"
+'''
+
+[destroy]
+description = "init + destroy for a stack"
+alias = "d"
+usage = '''
+arg "<stack>" help="Stack under stacks/" {
+  choices "iam" "s3" "network" "netbird-network" "ec2" "rds"
+}
+arg "[tf_args]" var=#true help="Extra terraform args after --"
+'''
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+dir="stacks/${usage_stack?}"
+terraform -chdir="$dir" init -upgrade
+eval "extra=(${usage_tf_args:-})"
+terraform -chdir="$dir" destroy "${extra[@]}"
+'''
+
+[output]
+description = "terraform output for a stack"
+alias = "o"
+usage = '''
+arg "<stack>" help="Stack under stacks/" {
+  choices "iam" "s3" "network" "netbird-network" "ec2" "rds"
+}
+arg "[name]" help="Optional output name"
+'''
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+dir="stacks/${usage_stack?}"
+terraform -chdir="$dir" init -upgrade >/dev/null
+if [[ -n "${usage_name:-}" ]]; then
+  terraform -chdir="$dir" output -raw "${usage_name}"
+else
+  terraform -chdir="$dir" output
+fi
+'''
+
+# ---------------------------------------------------------------------------
+# Named apply tasks with depends (see: mise tasks deps apply:all)
+# ---------------------------------------------------------------------------
+
+["apply:iam"]
+description = "apply iam"
+alias = "ai"
+run = "mise run apply -- iam -- -auto-approve"
+
+["apply:s3"]
+description = "apply s3 (after iam — bucket policy Principal)"
+alias = "as3"
+depends = ["apply:iam"]
+run = "mise run apply -- s3 -- -auto-approve"
+
+["apply:network"]
+description = "apply network (after s3)"
+alias = "anet"
+depends = ["apply:s3"]
+run = "mise run apply -- network -- -auto-approve"
+
+["apply:netbird-network"]
+description = "apply netbird-network (needs TF_VAR_netbird_token / .env)"
+alias = "anb"
+depends = ["apply:network"]
+run = "mise run apply -- netbird-network -- -auto-approve"
+
+["apply:ec2"]
+description = "apply ec2 (after netbird-network setup key)"
+alias = "aec2"
+depends = ["apply:netbird-network"]
+run = "mise run apply -- ec2 -- -auto-approve"
+
+["apply:rds"]
+description = "apply rds (after network)"
+alias = "ards"
+depends = ["apply:network"]
+run = "mise run apply -- rds -- -auto-approve"
+
+["apply:all"]
+description = "apply all stacks in dependency order (auto-approve)"
+alias = "aa"
+depends = ["apply:ec2", "apply:rds"]
+run = "echo 'apply:all finished (iam→s3→network→netbird→ec2 + rds)'"
+
+["destroy:all"]
+description = "destroy all stacks in reverse dependency order"
+alias = "da"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+# reverse of deploy order; confirm each destroy interactively unless -auto-approve passed
+eval "extra=($*)"
+for s in rds ec2 netbird-network network s3 iam; do
+  echo "===== destroy $s ====="
+  mise run destroy -- "$s" -- "${extra[@]}"
+done
+'''
+
+# ---------------------------------------------------------------------------
+# Bootstrap S3 state bucket (first time only)
+# ---------------------------------------------------------------------------
+
+[bootstrap]
+description = "first-time S3 state bucket: local apply → migrate backend"
+alias = "boot"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+cd stacks/s3
+terraform init -backend=false -upgrade
+terraform apply
+terraform init -upgrade -migrate-state -force-copy
+terraform apply
+echo "Bootstrap done. Next: mise run apply:iam  (or apply:all)"
+'''
+
+[deps]
+description = "show apply:all dependency graph"
+run = "mise tasks deps apply:all"
+
+[stacks]
+description = "list stacks and suggested apply order"
+alias = "ls"
+run = '''
+#!/usr/bin/env bash
+cat <<EOF
+Deploy order (dependencies):
+  1. s3          — state bucket (bootstrap once)
+  2. iam         — dedicated state user + keys
+  3. s3          — bucket policy → iam user ARN
+  4. network     — VPC + SGs + NAT
+  5. netbird-network  — needs TF_VAR_netbird_token
+  6. ec2         — app + NetBird router
+  7. rds         — PostgreSQL
+
+Commands:
+  mise run init -- <stack>
+  mise run validate -- <stack>   |  mise run validate:all
+  mise run plan -- <stack>       |  mise run plan:all
+  mise run apply -- <stack> -- -auto-approve
+  mise run apply:all             # iam→…→ec2 + rds (depends graph)
+  mise run destroy -- <stack>
+  mise run output -- iam s3_state_access_key_id
+  mise run bootstrap             # first-time S3 only
+  mise run deps                  # graph for apply:all
+EOF
+'''

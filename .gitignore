@@ -1,3 +1,7 @@
+# Local secrets for mise (TF_VAR_netbird_token, etc.)
+.env
+.env.local
+
 # Local .terraform directories
 .terraform/
 

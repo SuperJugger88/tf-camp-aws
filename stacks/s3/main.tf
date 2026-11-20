@@ -30,10 +30,10 @@ module "tf_state" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "AllowTerraformAdminObjects"
+        Sid    = "AllowS3StateUserObjects"
         Effect = "Allow"
         Principal = {
-          AWS = var.s3_policy_principal_arn
+          AWS = data.terraform_remote_state.iam.outputs.s3_state_user_arn
         }
         Action = [
           "s3:GetObject",
@@ -43,10 +43,10 @@ module "tf_state" {
         Resource = ["arn:aws:s3:::${var.s3_bucket_name}/*"]
       },
       {
-        Sid    = "AllowTerraformAdminList"
+        Sid    = "AllowS3StateUserList"
         Effect = "Allow"
         Principal = {
-          AWS = var.s3_policy_principal_arn
+          AWS = data.terraform_remote_state.iam.outputs.s3_state_user_arn
         }
         Action   = ["s3:ListBucket"]
         Resource = ["arn:aws:s3:::${var.s3_bucket_name}"]

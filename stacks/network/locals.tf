@@ -29,7 +29,7 @@ locals {
   ]
 
   name_sg_ec2 = "${var.project_name}-sg-ec2"
-  name_sg_app = "${var.project_name}-sg-app"
+  name_sg_mystique_server = "${var.project_name}-sg-mystique-server"
   name_sg_rds = "${var.project_name}-sg-rds"
 
   common_tags = merge(var.tags, {

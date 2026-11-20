@@ -1,13 +1,13 @@
 output "instance_id" {
-  value = module.app.id
+  value = module.mystique_server.id
 }
 
 output "public_ip" {
-  value = module.app.public_ip
+  value = module.mystique_server.public_ip
 }
 
 output "private_ip" {
-  value = module.app.private_ip
+  value = module.mystique_server.private_ip
 }
 
 output "key_name" {

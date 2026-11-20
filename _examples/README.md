@@ -15,23 +15,31 @@ terraform apply                 # creates the bucket + its config
 terraform init                  # switch to the real S3 backend
 terraform apply                 # adopt bucket settings into state
 
-# 1. Foundation: VPC + security groups + NAT
+# 1. Dedicated IAM user + access key for the state bucket
+cd ../iam
+terraform init && terraform apply
+
+# 2. Point bucket policy Principal at the iam user ARN
+cd ../s3
+terraform apply
+
+# 3. Foundation: VPC + security groups + NAT
 cd ../network
 terraform init
 terraform plan
 terraform apply
 
-# 2. NetBird overlay network, routes, policies, setup key
+# 4. NetBird overlay network, routes, policies, setup key
 cd ../netbird-network
 export TF_VAR_netbird_token=nbp_xxx   # Management PAT from NetBird dashboard
 terraform init
 terraform apply
 
-# 3. Workloads (app EC2 + NetBird routing peer)
+# 5. Workloads (app EC2 + NetBird routing peer)
 cd ../ec2
 terraform init && terraform plan && terraform apply
 
-# 4. Database
+# 6. Database
 cd ../rds
 terraform init && terraform plan && terraform apply
 ```
@@ -54,16 +62,27 @@ afterwards should report `No changes` for all stacks.
 
 ## Stack variables
 
+### `stacks/iam` — state bucket IAM user
+
+| Variable | Default | Description |
+|---|---|---|
+| `s3_bucket_name` | `tf-state-andrei-ivanov-2026` | Bucket the user policy is scoped to |
+| `project_name`, `tags` | `tf-learn`, `{Environment=dev}` | Tagging |
+
+Creates user `tf-learn-s3-state` + access key + managed policy. Outputs
+`s3_state_user_arn` for `stacks/s3` bucket policy.
+
 ### `stacks/s3` — state bucket
 
 | Variable | Default | Description |
 |---|---|---|
 | `s3_bucket_name` | `tf-state-andrei-ivanov-2026` | Globally unique bucket name for state |
-| `s3_policy_principal_arn` | `arn:aws:iam::060077938123:user/terraform-admin` | Principal allowed to read/write state objects |
+| `state_bucket`, `iam_state_key`, `aws_region`, `aws_profile` | see `variables.tf` | Remote state for `stacks/iam` Principal |
 | `project_name`, `tags` | `tf-learn`, `{Environment=dev}` | Tagging |
 
 > The backend block in `backends.tf` hardcodes the same bucket/key — the
-> stack manages the very bucket its own state lives in.
+> stack manages the very bucket its own state lives in. Bucket policy
+> Principal comes from `stacks/iam` remote state.
 
 ### `stacks/network` — VPC + security groups
 
@@ -146,11 +165,12 @@ Each directory mirrors a real stack and contains:
 
 | Directory | Stack | Contents |
 |---|---|---|
+| `iam/` | `stacks/iam` | IAM user + access key + policy for state bucket |
+| `s3/` | `stacks/s3` | Terraform state bucket |
 | `network/` | `stacks/network` | VPC, subnets, NAT Gateway, 3 security groups |
 | `netbird-network/` | `stacks/netbird-network` | NetBird network, split resources/policies, setup key |
 | `ec2/` | `stacks/ec2` | app instance + NetBird routing peer |
 | `rds/` | `stacks/rds` | RDS PostgreSQL |
-| `s3/` | `stacks/s3` | Terraform state bucket |
 
 ## Stack variables
 

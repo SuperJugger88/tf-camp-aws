@@ -38,16 +38,16 @@ output "ec2_sg_arn" {
   value = module.ec2_sg.security_group_arn
 }
 
-output "app_sg_id" {
-  value = module.app_sg.security_group_id
+output "mystique_server_sg_id" {
+  value = module.mystique_server_sg.security_group_id
 }
 
-output "app_sg_name" {
-  value = module.app_sg.security_group_name
+output "mystique_server_sg_name" {
+  value = module.mystique_server_sg.security_group_name
 }
 
-output "app_sg_arn" {
-  value = module.app_sg.security_group_arn
+output "mystique_server_sg_arn" {
+  value = module.mystique_server_sg.security_group_arn
 }
 
 output "rds_sg_id" {

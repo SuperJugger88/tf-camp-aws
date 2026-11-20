@@ -1,5 +1,5 @@
 locals {
-  name_ec2_app        = coalesce(var.instance_name, "${var.project_name}-ec2-app")
+  name_mystique_server = coalesce(var.instance_name, "${var.project_name}-mystique-server")
   name_netbird_router = "${var.project_name}-netbird-router"
   key_name            = coalesce(var.key_name, "${var.project_name}-default")
 

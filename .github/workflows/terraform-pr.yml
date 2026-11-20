@@ -1,0 +1,157 @@
+name: Terraform PR
+
+on:
+  pull_request:
+    paths:
+      - "stacks/**"
+      - ".github/workflows/terraform-*.yml"
+      - ".github/actions/setup-terraform-aws/**"
+
+concurrency:
+  group: tf-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect:
+    name: Detect changed stacks
+    runs-on: ubuntu-latest
+    outputs:
+      stacks: ${{ steps.set.outputs.stacks }}
+      any: ${{ steps.set.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            iam:
+              - 'stacks/iam/**'
+            s3:
+              - 'stacks/s3/**'
+            network:
+              - 'stacks/network/**'
+            netbird-network:
+              - 'stacks/netbird-network/**'
+            ec2:
+              - 'stacks/ec2/**'
+            rds:
+              - 'stacks/rds/**'
+
+      - name: Build matrix
+        id: set
+        shell: bash
+        run: |
+          stacks=()
+          [[ "${{ steps.filter.outputs.iam }}" == "true" ]] && stacks+=("iam")
+          [[ "${{ steps.filter.outputs.s3 }}" == "true" ]] && stacks+=("s3")
+          [[ "${{ steps.filter.outputs.network }}" == "true" ]] && stacks+=("network")
+          [[ "${{ steps.filter.outputs.netbird-network }}" == "true" ]] && stacks+=("netbird-network")
+          [[ "${{ steps.filter.outputs.ec2 }}" == "true" ]] && stacks+=("ec2")
+          [[ "${{ steps.filter.outputs.rds }}" == "true" ]] && stacks+=("rds")
+
+          if [[ ${#stacks[@]} -eq 0 ]]; then
+            echo 'stacks=[]' >> "$GITHUB_OUTPUT"
+            echo 'any=false' >> "$GITHUB_OUTPUT"
+          else
+            json=$(printf '%s\n' "${stacks[@]}" | jq -R . | jq -sc .)
+            echo "stacks=${json}" >> "$GITHUB_OUTPUT"
+            echo 'any=true' >> "$GITHUB_OUTPUT"
+          fi
+          echo "Changed stacks: ${stacks[*]:-none}"
+
+  checks:
+    name: Check ${{ matrix.stack }}
+    needs: detect
+    if: needs.detect.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        stack: ${{ fromJson(needs.detect.outputs.stacks) }}
+    defaults:
+      run:
+        working-directory: stacks/${{ matrix.stack }}
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      TF_VAR_netbird_token: ${{ secrets.NETBIRD_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform + AWS
+        uses: ./.github/actions/setup-terraform-aws
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
+
+      - name: fmt
+        run: terraform fmt -check -recursive
+
+      - name: init (no backend) + validate
+        run: |
+          terraform init -backend=false -upgrade
+          terraform validate
+
+      - name: init (remote state)
+        run: terraform init -upgrade
+
+      - name: plan
+        id: plan
+        run: |
+          set -o pipefail
+          terraform plan -no-color -input=false -out=tfplan | tee plan.txt
+
+      - name: Upload plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ matrix.stack }}
+          path: |
+            stacks/${{ matrix.stack }}/tfplan
+            stacks/${{ matrix.stack }}/plan.txt
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Comment plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const stack = '${{ matrix.stack }}';
+            let body = `#### Terraform plan \`${stack}\`\n`;
+            try {
+              const plan = fs.readFileSync(`stacks/${stack}/plan.txt`, 'utf8');
+              const clipped = plan.length > 60000 ? plan.slice(0, 60000) + '\n…truncated' : plan;
+              body += '```\n' + clipped + '\n```';
+            } catch (e) {
+              body += `_plan.txt missing: ${e.message}_`;
+            }
+            const marker = `<!-- tf-plan:${stack} -->`;
+            body = marker + '\n' + body;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.user.type === 'Bot' && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
