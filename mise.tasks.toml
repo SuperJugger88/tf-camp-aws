@@ -222,6 +222,21 @@ terraform apply
 echo "Bootstrap done. Next: mise run apply:iam  (or apply:all)"
 '''
 
+[lock]
+description = "refresh .terraform.lock.hcl for linux+darwin (CI + local)"
+alias = "lk"
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+for s in iam s3 network netbird-network ec2 rds; do
+  echo "===== lock $s ====="
+  (cd "stacks/$s" && terraform providers lock \
+    -platform=linux_amd64 \
+    -platform=darwin_arm64 \
+    -platform=darwin_amd64)
+done
+'''
+
 [deps]
 description = "show apply:all dependency graph"
 run = "mise tasks deps apply:all"
